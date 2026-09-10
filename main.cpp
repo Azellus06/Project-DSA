@@ -85,111 +85,111 @@ public:
 };
 
 // ----- Operations -----
-bool insertAccount(const Account &acc)
+bool ATM::insertAccount(const Account &acc)
 {
 }
 
-Node *searchByAccountNumber(int accNum)
+Node *ATM::searchByAccountNumber(int accNum)
 {
 }
 
-void displayAll()
+void ATM::displayAll()
 { // for testing
 }
 
-int generateNextAccountNumber()
+int ATM::generateNextAccountNumber()
 {
 }
 
-bool registerNewAccount(const Account &acc, char driveLetter)
+bool ATM::registerNewAccount(const Account &acc, char driveLetter)
 { // generateAccNumber, generateRandomShiftKey, encryption, insert sa list, tas write to card
 }
 
-void clearList()
+void ATM::clearList()
 {
 }
 
 // ----- Validations -----
-bool validateDeposit(double amount)
+bool ATM::validateDeposit(double amount)
 { // >= 5000
 }
 
-bool validateContactNumber(const string &num)
+bool ATM::validateContactNumber(const string &num)
 {
 }
 
-bool validateBirthday(const string &bday)
+bool ATM::validateBirthday(const string &bday)
 { // format check
 }
 
-bool validateAmount(double amount, double currentBalance)
+bool ATM::validateAmount(double amount, double currentBalance)
 { // pang withdraw, bawal 0 at overdraw
 }
 
-bool validatePin(const string &pin)
+bool ATM::validatePin(const string &pin)
 { // max 6 digits, Enter if only 4
 }
 
 // ----- File Handling -----
-bool saveToFile()
+bool ATM::saveToFile()
 { // saves every transaction
 }
 
-bool retrieveFromFile()
+bool ATM::retrieveFromFile()
 {
 }
 
 // ----- PIN encryption -----
-string encryptPin(const string &rawPin, int shiftKey)
+string ATM::encryptPin(const string &rawPin, int shiftKey)
 {
 }
 
-string decryptPin(const string &encryptedPin, int shiftKey)
+string ATM::decryptPin(const string &encryptedPin, int shiftKey)
 {
 }
 
-int generateRandomShiftKey()
+int ATM::generateRandomShiftKey()
 { // called once at registration
 }
 
 // ----- Flash Drive -----
-bool detectFlashDrive(char &driveLetter)
+bool ATM::detectFlashDrive(char &driveLetter)
 {
 }
 
-string getMaskedPinInput()
+string ATM::getMaskedPinInput()
 {
 }
 
-bool writeToCard(char driveLetter, int accNum, const string &encryptedPin, int shiftKey)
+bool ATM::writeToCard(char driveLetter, int accNum, const string &encryptedPin, int shiftKey)
 {
 }
 
-bool readFromCard(char driveLetter, int &accNum, string &encryptedPin, int &shiftKey)
+bool ATM::readFromCard(char driveLetter, int &accNum, string &encryptedPin, int &shiftKey)
 {
 }
 
-bool authenticate(char driveLetter, int accNum, const string &enteredPin)
+bool ATM::authenticate(char driveLetter, int accNum, const string &enteredPin)
 {
 }
 
 // ----- For Users -----
-void checkBalance(int accNum)
+void ATM::checkBalance(int accNum)
 {
 }
 
-bool withdraw(int accNum, double amount)
+bool ATM::withdraw(int accNum, double amount)
 {
 }
 
-bool deposit(int accNum, double amount)
+bool ATM::deposit(int accNum, double amount)
 {
 }
 
-bool fundTransfer(int fromAccNum, int toAccNum, double amount)
+bool ATM::fundTransfer(int fromAccNum, int toAccNum, double amount)
 {
 }
 
-bool changePin(int accNum, const string &oldPin, const string &newPin)
+bool ATM::changePin(int accNum, const string &oldPin, const string &newPin)
 {
 }
