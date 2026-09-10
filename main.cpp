@@ -185,10 +185,56 @@ string ATM::getMaskedPinInput()
 
 bool ATM::writeToCard(char driveLetter, int accNum, const string &encryptedPin, int shiftKey)
 {
+    string path = string(1, driveLetter) + ":\\pin.code";
+
+    ofstream file(path);
+    if (!file.is_open())
+    {
+        return false;
+    }
+
+    file << accNum << "," << encryptedPin << "," << shiftKey;
+
+    file.close();
+    return true;
 }
 
 bool ATM::readFromCard(char driveLetter, int &accNum, string &encryptedPin, int &shiftKey)
 {
+    string path = string(1, driveLetter) + ":\\pin.code";
+
+    ifstream file(path);
+    if (!file.is_open())
+    {
+        return false;
+    }
+
+    string line;
+    getline(file, line);
+    file.close();
+
+    stringstream ss(line);
+    string data;
+
+    if (!getline(ss, data, ','))
+    {
+        return false;
+    }
+    accNum = stoi(data);
+
+    if (!getline(ss, data, ','))
+    {
+        return false;
+    }
+    encryptedPin = data;
+
+    if (!getline(ss, data, ','))
+    {
+        return false;
+    }
+    shiftKey = stoi(data);
+
+    return true;
 }
 
 bool ATM::authenticate(char driveLetter, int accNum, const string &enteredPin)
