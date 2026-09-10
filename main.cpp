@@ -2,6 +2,7 @@
 #include <string>
 #include <sstream>
 #include <fstream>
+#include <conio.h>
 #include <windows.h>
 #include <filesystem>
 
@@ -74,7 +75,7 @@ public:
     string getMaskedPinInput();
     bool writeToCard(char driveLetter, int accNum, const string &encryptedPin, int shiftKey);
     bool readFromCard(char driveLetter, int &accNum, string &encryptedPin, int &shiftKey);
-    bool authenticate(char driveLetter, int accNum, const string &enteredPin);
+    bool authenticate(char driveLetter, int &accNum, const string &enteredPin);
 
     // ----- For Users -----
     void checkBalance(int accNum);
@@ -181,6 +182,34 @@ bool ATM::detectFlashDrive(char &driveLetter)
 
 string ATM::getMaskedPinInput()
 {
+    string pin = "";
+    char ch;
+
+    while (true)
+    {
+        ch = _getch();
+
+        if (ch == '\r' || ch == '\n') // Pinindot enter
+        {
+            break;
+        }
+        else if (ch == '\b') // Pinindot backspace
+        {
+            if (!pin.empty())
+            {
+                pin.pop_back();
+                cout << "\b \b";
+            }
+        }
+        else
+        {
+            pin += ch;
+            cout << '*';
+        }
+    }
+
+    cout << endl;
+    return pin;
 }
 
 bool ATM::writeToCard(char driveLetter, int accNum, const string &encryptedPin, int shiftKey)
@@ -237,20 +266,14 @@ bool ATM::readFromCard(char driveLetter, int &accNum, string &encryptedPin, int 
     return true;
 }
 
-bool ATM::authenticate(char driveLetter, int accNum, const string &enteredPin)
+bool ATM::authenticate(char driveLetter, int &accNum, const string &enteredPin)
 {
-    int storedAccNum;
-    int storedShiftKey;
     string storedEncryptedPin;
+    int storedShiftKey;
 
-    if (!readFromCard(driveLetter, storedAccNum, storedEncryptedPin, storedShiftKey))
+    if (!readFromCard(driveLetter, accNum, storedEncryptedPin, storedShiftKey))
     {
         return false; // no card
-    }
-
-    if (storedAccNum != accNum)
-    {
-        return false; // maling account
     }
 
     string decrypted = decryptPin(storedEncryptedPin, storedShiftKey);
