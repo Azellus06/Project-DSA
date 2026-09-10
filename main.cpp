@@ -317,6 +317,21 @@ bool ATM::withdraw(int accNum, double amount)
 
 bool ATM::deposit(int accNum, double amount)
 {
+    if (amount <= 0)
+    {
+        return false;
+    }
+
+    Node *accountNode = searchByAccountNumber(accNum);
+
+    if (accountNode == NULL)
+    {
+        return false;
+    }
+
+    accountNode->data.balance += amount;
+    saveToFile();
+    return true;
 }
 
 bool ATM::fundTransfer(int fromAccNum, int toAccNum, double amount)
