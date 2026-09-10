@@ -336,6 +336,29 @@ bool ATM::deposit(int accNum, double amount)
 
 bool ATM::fundTransfer(int fromAccNum, int toAccNum, double amount)
 {
+    Node *fromNode = searchByAccountNumber(fromAccNum);
+    Node *toNode = searchByAccountNumber(toAccNum);
+
+    if (fromNode == NULL || toNode == NULL)
+    {
+        return false;
+    }
+
+    if (fromAccNum == toAccNum)
+    {
+        return false; // bawal transfer sa sarili
+    }
+
+    if (!validateAmount(amount, fromNode->data.balance))
+    {
+        return false;
+    }
+
+    fromNode->data.balance -= amount;
+    toNode->data.balance += amount;
+
+    saveToFile();
+    return true;
 }
 
 bool ATM::changePin(int accNum, const string &oldPin, const string &newPin)
