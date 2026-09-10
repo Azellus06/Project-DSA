@@ -284,6 +284,15 @@ bool ATM::authenticate(char driveLetter, int &accNum, const string &enteredPin)
 // ----- For Users -----
 void ATM::checkBalance(int accNum)
 {
+    Node *accountNode = searchByAccountNumber(accNum);
+
+    if (accountNode == NULL)
+    {
+        cout << "Account not found.\n";
+        return;
+    }
+
+    cout << "Current Balance: " << accountNode->data.balance << endl;
 }
 
 bool ATM::withdraw(int accNum, double amount)
