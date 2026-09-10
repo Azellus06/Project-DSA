@@ -155,6 +155,28 @@ int ATM::generateRandomShiftKey()
 // ----- Flash Drive -----
 bool ATM::detectFlashDrive(char &driveLetter)
 {
+    DWORD drives = GetLogicalDrives();
+
+    for (int i = 0; i < 26; i++)
+    {
+        // check kung nakita yung drive
+        if (drives & (1 << i))
+        {
+            char letter = 'A' + i;
+            string path = string(1, letter) + ":\\";
+
+            UINT type = GetDriveTypeA(path.c_str());
+
+            // check kung usb yung drive na nakita
+            if (type == DRIVE_REMOVABLE)
+            {
+                driveLetter = letter;
+                return true;
+            }
+        }
+    }
+
+    return false; // di nakasaksak usb
 }
 
 string ATM::getMaskedPinInput()
