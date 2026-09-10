@@ -363,4 +363,28 @@ bool ATM::fundTransfer(int fromAccNum, int toAccNum, double amount)
 
 bool ATM::changePin(int accNum, const string &oldPin, const string &newPin)
 {
+    Node *accountNode = searchByAccountNumber(accNum);
+
+    if (accountNode == NULL)
+    {
+        return false;
+    }
+
+    string decryptedOld = decryptPin(accountNode->data.encryptedPin, accountNode->data.pinShiftKey);
+
+    if (decryptedOld != oldPin)
+    {
+        return false; // wrong old PIN
+    }
+
+    if (!validatePin(newPin))
+    {
+        return false;
+    }
+
+    string newEncrypted = encryptPin(newPin, accountNode->data.pinShiftKey);
+    accountNode->data.encryptedPin = newEncrypted;
+
+    saveToFile();
+    return true;
 }
