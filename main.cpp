@@ -239,6 +239,23 @@ bool ATM::readFromCard(char driveLetter, int &accNum, string &encryptedPin, int 
 
 bool ATM::authenticate(char driveLetter, int accNum, const string &enteredPin)
 {
+    int storedAccNum;
+    int storedShiftKey;
+    string storedEncryptedPin;
+
+    if (!readFromCard(driveLetter, storedAccNum, storedEncryptedPin, storedShiftKey))
+    {
+        return false; // no card
+    }
+
+    if (storedAccNum != accNum)
+    {
+        return false; // maling account
+    }
+
+    string decrypted = decryptPin(storedEncryptedPin, storedShiftKey);
+
+    return decrypted == enteredPin;
 }
 
 // ----- For Users -----
