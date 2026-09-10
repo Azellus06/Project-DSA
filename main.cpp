@@ -124,7 +124,8 @@ bool ATM::validateBirthday(const string &bday)
 }
 
 bool ATM::validateAmount(double amount, double currentBalance)
-{ // pang withdraw, bawal 0 at overdraw
+{
+    return amount > 0 && amount <= currentBalance; // pang withdraw, bawal 0 at overdraw
 }
 
 bool ATM::validatePin(const string &pin)
@@ -297,6 +298,21 @@ void ATM::checkBalance(int accNum)
 
 bool ATM::withdraw(int accNum, double amount)
 {
+    Node *accountNode = searchByAccountNumber(accNum);
+
+    if (accountNode == NULL)
+    {
+        return false;
+    }
+
+    if (!validateAmount(amount, accountNode->data.balance))
+    {
+        return false;
+    }
+
+    accountNode->data.balance -= amount;
+    saveToFile();
+    return true;
 }
 
 bool ATM::deposit(int accNum, double amount)
