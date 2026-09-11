@@ -236,6 +236,7 @@ string ATM::decryptPin(const string &encryptedPin, int shiftKey)
 
 int ATM::generateRandomShiftKey()
 { // called once at registration
+    return rand() % 9 + 1;
 }
 
 // ----- Flash Drive -----
