@@ -228,10 +228,28 @@ bool ATM::retrieveFromFile()
 // ----- PIN encryption -----
 string ATM::encryptPin(const string &rawPin, int shiftKey)
 {
+    string result = rawPin;
+
+    for (char &c : result)
+    {
+        int digit = (c - '0' + shiftKey) % 10;
+        c = '0' + digit;
+    }
+
+    return result;
 }
 
 string ATM::decryptPin(const string &encryptedPin, int shiftKey)
 {
+    string result = encryptedPin;
+
+    for (char &c : result)
+    {
+        int digit = (c - '0' - shiftKey % 10 + 10) % 10;
+        c = '0' + digit;
+    }
+    
+    return result;
 }
 
 int ATM::generateRandomShiftKey()
