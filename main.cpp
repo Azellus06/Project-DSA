@@ -120,6 +120,25 @@ void ATM::displayAll()
 
 int ATM::generateNextAccountNumber()
 {
+    if (!head)
+    {
+        return 10001;
+    }
+
+    int maxNum = 10001;
+    Node *current = head;
+
+    while (current)
+    {
+        if (current->data.accountNumber > maxNum)
+        {
+            maxNum = current->data.accountNumber;
+        }
+
+        current = current->next;
+    }
+
+    return maxNum + 1;
 }
 
 bool ATM::registerNewAccount(const Account &acc, char driveLetter)
@@ -250,7 +269,7 @@ bool ATM::saveToFile()
 
     Node *current = head;
 
-    while (current != NULL)
+    while (current)
     {
         outputFile << current->data.accountNumber << ","
                    << current->data.accountName << ","
@@ -471,7 +490,7 @@ void ATM::checkBalance(int accNum)
 {
     Node *accountNode = searchByAccountNumber(accNum);
 
-    if (accountNode == NULL)
+    if (!accountNode)
     {
         cout << "Account not found.\n";
         return;
@@ -484,7 +503,7 @@ bool ATM::withdraw(int accNum, double amount)
 {
     Node *accountNode = searchByAccountNumber(accNum);
 
-    if (accountNode == NULL)
+    if (!accountNode)
     {
         return false;
     }
@@ -508,7 +527,7 @@ bool ATM::deposit(int accNum, double amount)
 
     Node *accountNode = searchByAccountNumber(accNum);
 
-    if (accountNode == NULL)
+    if (!accountNode)
     {
         return false;
     }
@@ -523,7 +542,7 @@ bool ATM::fundTransfer(int fromAccNum, int toAccNum, double amount)
     Node *fromNode = searchByAccountNumber(fromAccNum);
     Node *toNode = searchByAccountNumber(toAccNum);
 
-    if (fromNode == NULL || toNode == NULL)
+    if (!fromNode || !toNode)
     {
         return false;
     }
@@ -549,7 +568,7 @@ bool ATM::changePin(int accNum, const string &oldPin, const string &newPin)
 {
     Node *accountNode = searchByAccountNumber(accNum);
 
-    if (accountNode == NULL)
+    if (!accountNode)
     {
         return false;
     }
