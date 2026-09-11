@@ -119,6 +119,26 @@ Node *ATM::searchByAccountNumber(int accNum)
 
 void ATM::displayAll()
 { // for testing
+    if (!head)
+    {
+        cout << "No accounts found." << endl;
+        return;
+    }
+
+    Node *current = head;
+    while (current)
+    {
+        cout << "Account Number: " << current->data.accountNumber << endl;
+        cout << "Name: " << current->data.accountName << endl;
+        cout << "Birthday: " << current->data.birthday << endl;
+        cout << "Contact: " << current->data.contactNumber << endl;
+        cout << "Balance: " << current->data.balance << endl;
+        cout << "Shift Key: " << current->data.pinShiftKey << endl;
+        cout << "Encrypted PIN: " << current->data.encryptedPin << endl;
+        cout << "-----------------------------" << endl;
+
+        current = current->next;
+    }
 }
 
 int ATM::generateNextAccountNumber()
@@ -145,7 +165,7 @@ int ATM::generateNextAccountNumber()
 }
 
 bool ATM::registerNewAccount(const Account &acc, char driveLetter)
-{ // generateAccNumber, generateRandomShiftKey, encryption, insert sa list, tas write to card
+{                         // generateAccNumber, generateRandomShiftKey, encryption, insert sa list, tas write to card
     Account newAcc = acc; // copy so we can fill in the generated fields
 
     newAcc.accountNumber = generateNextAccountNumber();
