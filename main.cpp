@@ -218,11 +218,70 @@ bool ATM::validatePin(const string &pin)
 
 // ----- File Handling -----
 bool ATM::saveToFile()
-{ // saves every transaction
+{
+    ofstream outputFile(DATABASE);
+
+    if (!outputFile.is_open())
+    {
+        return false;
+    }
+
+    Node *current = head;
+
+    while (current != NULL)
+    {
+        outputFile << current->data.accountNumber << ","
+                   << current->data.accountName << ","
+                   << current->data.birthday << ","
+                   << current->data.contactNumber << ","
+                   << current->data.balance << ","
+                   << current->data.pinShiftKey << ","
+                   << current->data.encryptedPin << "\n";
+        current = current->next;
+    }
+
+    outputFile.close();
+    return true;
 }
 
-bool ATM::retrieveFromFile()
+bool ATM::retrieveFromFile() // tapos na
 {
+    ifstream inputFile(DATABASE);
+
+    if (!inputFile.is_open())
+    {
+        return false;
+    }
+
+    clearList();
+
+    string line;
+
+    while (getline(inputFile, line))
+    {
+        if (line.empty())
+            continue;
+
+        stringstream ss(line);
+        string data;
+        Account acc;
+
+        getline(ss, data, ',');
+        acc.accountNumber = stoi(data);
+        getline(ss, acc.accountName, ',');
+        getline(ss, acc.birthday, ',');
+        getline(ss, acc.contactNumber, ',');
+        getline(ss, data, ',');
+        acc.balance = stod(data);
+        getline(ss, data, ',');
+        acc.pinShiftKey = stoi(data);
+        getline(ss, acc.encryptedPin, ',');
+
+        insertAccount(acc);
+    }
+
+    inputFile.close();
+    return true;
 }
 
 // ----- PIN encryption -----
@@ -248,7 +307,7 @@ string ATM::decryptPin(const string &encryptedPin, int shiftKey)
         int digit = (c - '0' - shiftKey % 10 + 10) % 10;
         c = '0' + digit;
     }
-    
+
     return result;
 }
 
