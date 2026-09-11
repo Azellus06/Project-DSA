@@ -128,6 +128,14 @@ bool ATM::registerNewAccount(const Account &acc, char driveLetter)
 
 void ATM::clearList()
 {
+    Node *ptr;
+
+    while (head)
+    {
+        ptr = head;
+        head = head->next;
+        delete (ptr);
+    }
 }
 
 // ----- Validations -----
@@ -226,7 +234,7 @@ bool ATM::validatePin(const string &pin)
             return false;
         }
     }
-    
+
     return true;
 }
 
