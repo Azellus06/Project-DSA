@@ -93,7 +93,7 @@ bool ATM::insertAccount(const Account &acc) // O(1) insertion
     Node *newNode = new Node(acc);
     newNode->next = head;
     head = newNode;
-    
+
     return true;
 }
 
@@ -103,10 +103,11 @@ Node *ATM::searchByAccountNumber(int accNum)
 
     while (current)
     {
-        if (current->data.accountNumber == accNum){
+        if (current->data.accountNumber == accNum)
+        {
             return current;
         }
-           
+
         current = current->next;
     }
 
@@ -136,10 +137,74 @@ bool ATM::validateDeposit(double amount)
 
 bool ATM::validateContactNumber(const string &num)
 {
+    if (num.length() != 11)
+    {
+        return false;
+    }
+
+    if (num[0] != '0' || num[1] != '9')
+    {
+        return false;
+    }
+
+    for (char c : num)
+    {
+        if (!isdigit(c))
+        {
+            return false;
+        }
+    }
+
+    return true;
 }
 
 bool ATM::validateBirthday(const string &bday)
-{ // format check
+{
+    int month, day, year;
+
+    if (bday.length() != 10)
+    {
+        return false;
+    }
+
+    if (bday[2] != '/' || bday[5] != '/')
+    {
+        return false;
+    }
+
+    for (int i = 0; i < 10; i++)
+    {
+        if (i == 2 || i == 5) // skip slashes
+        {
+            continue;
+        }
+
+        if (!isdigit(bday[i]))
+        {
+            return false;
+        }
+    }
+
+    month = stoi(bday.substr(0, 2));
+    day = stoi(bday.substr(3, 2));
+    year = stoi(bday.substr(6, 4));
+
+    if (month < 1 || month > 12)
+    {
+        return false;
+    }
+
+    if (day < 1 || day > 31)
+    {
+        return false;
+    }
+
+    if (year < 1900 || year > 2025)
+    {
+        return false;
+    }
+
+    return true;
 }
 
 bool ATM::validateAmount(double amount, double currentBalance)
