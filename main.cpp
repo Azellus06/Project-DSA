@@ -5,6 +5,8 @@
 #include <conio.h>
 #include <windows.h>
 #include <filesystem>
+#include <cstdlib>
+#include <ctime>
 
 using namespace std;
 const string DATABASE = "database.csv";
@@ -86,12 +88,29 @@ public:
 };
 
 // ----- Operations -----
-bool ATM::insertAccount(const Account &acc)
+bool ATM::insertAccount(const Account &acc) // O(1) insertion
 {
+    Node *newNode = new Node(acc);
+    newNode->next = head;
+    head = newNode;
+    
+    return true;
 }
 
 Node *ATM::searchByAccountNumber(int accNum)
 {
+    Node *current = head;
+
+    while (current)
+    {
+        if (current->data.accountNumber == accNum){
+            return current;
+        }
+           
+        current = current->next;
+    }
+
+    return NULL;
 }
 
 void ATM::displayAll()
@@ -125,7 +144,7 @@ bool ATM::validateBirthday(const string &bday)
 
 bool ATM::validateAmount(double amount, double currentBalance)
 {
-    return amount > 0 && amount <= currentBalance; // pang withdraw, bawal 0 at overdraw
+    return amount > 0 && amount <= currentBalance;
 }
 
 bool ATM::validatePin(const string &pin)
