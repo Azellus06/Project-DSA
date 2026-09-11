@@ -214,6 +214,20 @@ bool ATM::validateAmount(double amount, double currentBalance)
 
 bool ATM::validatePin(const string &pin)
 { // max 6 digits, Enter if only 4
+    if (pin.length() < 4 || pin.length() > 6)
+    {
+        return false;
+    }
+
+    for (char c : pin)
+    {
+        if (!isdigit(c))
+        {
+            return false;
+        }
+    }
+    
+    return true;
 }
 
 // ----- File Handling -----
@@ -244,7 +258,7 @@ bool ATM::saveToFile()
     return true;
 }
 
-bool ATM::retrieveFromFile() // tapos na
+bool ATM::retrieveFromFile()
 {
     ifstream inputFile(DATABASE);
 
