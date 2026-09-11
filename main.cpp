@@ -11,6 +11,9 @@
 using namespace std;
 const string DATABASE = "database.csv";
 
+// fix file handling issue
+// NOTE: assumes acc.encryptedPin currently holds the RAW pin typed by the user which gets encrypted here before storing/inserting
+
 struct Account
 {
     int accountNumber; // 5-digit, auto-generated, start at 10001
@@ -143,6 +146,26 @@ int ATM::generateNextAccountNumber()
 
 bool ATM::registerNewAccount(const Account &acc, char driveLetter)
 { // generateAccNumber, generateRandomShiftKey, encryption, insert sa list, tas write to card
+    Account newAcc = acc; // copy so we can fill in the generated fields
+
+    newAcc.accountNumber = generateNextAccountNumber();
+    newAcc.pinShiftKey = generateRandomShiftKey();
+
+    string rawPin = acc.encryptedPin;
+    newAcc.encryptedPin = encryptPin(rawPin, newAcc.pinShiftKey);
+
+    if (!insertAccount(newAcc))
+    {
+        return false;
+    }
+
+    if (!writeToCard(driveLetter, newAcc.accountNumber, newAcc.encryptedPin, newAcc.pinShiftKey))
+    {
+        return false;
+    }
+
+    saveToFile();
+    return true;
 }
 
 void ATM::clearList()
@@ -159,7 +182,8 @@ void ATM::clearList()
 
 // ----- Validations -----
 bool ATM::validateDeposit(double amount)
-{ // >= 5000
+{
+    return amount >= 5000;
 }
 
 bool ATM::validateContactNumber(const string &num)
