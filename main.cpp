@@ -439,6 +439,14 @@ bool ATM::validateContactNumber(const string &num){
     return true;
 }
 bool ATM::validateBirthday(const string &bday){
+    if (bday.length() != 10) return false;
+    if (bday[2] != '/' || bday[5] != '/') return false;
+
+    for (int i = 0; i < 10; i++){
+        if (i == 2 || i == 5) continue; // skip slashes
+        if (!isdigit(bday[i])) return false;
+    }
+
     int month = stoi(bday.substr(0, 2));
     int day = stoi(bday.substr(3, 2));
     int year = stoi(bday.substr(6, 4));
@@ -448,14 +456,6 @@ bool ATM::validateBirthday(const string &bday){
     time_t t = time(0);
     tm *now = localtime(&t);
     int currentYear = now->tm_year + 1900; // updated current year
-
-    if (bday.length() != 10) return false;
-    if (bday[2] != '/' || bday[5] != '/') return false;
-
-    for (int i = 0; i < 10; i++){
-        if (i == 2 || i == 5) continue; // skip slashes
-        if (!isdigit(bday[i])) return false;
-    }
 
     if (month < 1 || month > 12) return false;
     if (year < 1900 || year > currentYear) return false;
