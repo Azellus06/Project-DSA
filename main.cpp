@@ -11,8 +11,7 @@
 using namespace std;
 const string DATABASE = "database.csv";
 
-struct Account
-{
+struct Account{
     int accountNumber; // 5-digit, auto-generated, start at 10001
     string accountName;
     string birthday; // MM/DD/YYY
@@ -21,30 +20,22 @@ struct Account
     int pinShiftKey;     // random key used for Caesar on this account's PIN, hindi siya fixed shift
     string encryptedPin; // PIN after Caesar applied
 };
-
-struct Node
-{
+struct Node{
     Account data;
     Node *next;
-    Node(Account data)
-    {
+    Node(Account data){
         this->data = data;
         this->next = NULL;
     }
 };
-
-class ATM
-{
+class ATM{
 private:
     Node *head;
-
 public:
-    ATM()
-    {
+    ATM(){
         head = NULL;
     }
-    ~ATM()
-    {
+    ~ATM(){
         clearList();
     };
 
@@ -88,49 +79,286 @@ public:
     bool changePin(int accNum, const string &oldPin, const string &newPin, char driveLetter);
 };
 
-int main()
-{
+// ===================== main() and menu flows =====================
+bool isValidWholeNumber(const string &str){
+    if (str.empty() || str.length() > 9) return false;
+
+    for (char c : str) if (c < '0' || c > '9') return false;
+
+    return true;
+}
+bool isValidDecimalNumber(const string &str){
+    if (str.empty() || str.length() > 15) return false;
+
+    bool decimalSeen = false;
+    int digitCount = 0;
+
+    for (char c : str){
+        if (c == '.' && !decimalSeen){
+            decimalSeen = true;
+            continue;
+        }
+
+        if (c < '0' || c > '9') return false;
+
+        digitCount++;
+    }
+
+    return digitCount > 0;
+}
+void transactionMenu(ATM &atm, int accNum, char driveLetter){
+    bool loggedIn = true;
+
+    while (loggedIn){
+        cout << "\n--- Transaction Menu (Account #" << accNum << ") ---\n";
+        cout << "1. Check Balance\n";
+        cout << "2. Deposit\n";
+        cout << "3. Withdraw\n";
+        cout << "4. Fund Transfer\n";
+        cout << "5. Change PIN\n";
+        cout << "6. Logout\n";
+        cout << "Choice: ";
+
+        string choiceStr;
+        getline(cin, choiceStr);
+
+        if (!isValidWholeNumber(choiceStr)){
+            cout << "Invalid choice.\n";
+            continue;
+        }
+
+        int choice = stoi(choiceStr);
+        string line;
+        double amount;
+
+        switch (choice){
+        case 1:
+            atm.checkBalance(accNum);
+            break;
+        case 2:
+            cout << "Enter deposit amount: ";
+            getline(cin, line);
+
+            if (!isValidDecimalNumber(line)){
+                cout << "Invalid amount.\n";
+                break;
+            }
+
+            amount = stod(line);
+
+            if (atm.deposit(accNum, amount)) cout << "Deposit successful.\n";
+            else cout << "Deposit failed. Amount must be greater than 0.\n";
+            break;
+        case 3:
+            cout << "Enter withdrawal amount: ";
+            getline(cin, line);
+
+            if (!isValidDecimalNumber(line)){
+                cout << "Invalid amount.\n";
+                break;
+            }
+
+            amount = stod(line);
+
+            if (atm.withdraw(accNum, amount)) cout << "Withdrawal successful.\n";
+            else cout << "Withdrawal failed. Check your amount and balance.\n";
+            break;
+        case 4:{
+            cout << "Enter recipient account number: ";
+            string toStr;
+            getline(cin, toStr);
+
+            if (!isValidWholeNumber(toStr)){
+                cout << "Invalid account number.\n";
+                break;
+            }
+
+            int toAccNum = stoi(toStr);
+
+            cout << "Enter amount to transfer: ";
+            getline(cin, line);
+
+            if (!isValidDecimalNumber(line)){
+                cout << "Invalid amount.\n";
+                break;
+            }
+
+            amount = stod(line);
+
+            if (atm.fundTransfer(accNum, toAccNum, amount)) cout << "Transfer successful.\n";
+            else cout << "Transfer failed. Check the recipient account and amount.\n";
+            break;
+        }
+        case 5:{
+            cout << "Enter current PIN: ";
+            string oldPin = atm.getMaskedPinInput();
+
+            cout << "Enter new PIN (4 to 6 digits): ";
+            string newPin = atm.getMaskedPinInput();
+
+            if (atm.changePin(accNum, oldPin, newPin, driveLetter)) cout << "PIN changed successfully.\n";
+            else cout << "PIN change failed. Check your current PIN and the new PIN format.\n";
+            break;
+        }
+        case 6:
+            cout << "Logging out...\n";
+            loggedIn = false;
+            break;
+        default:
+            cout << "Invalid choice.\n";
+            break;
+        }
+    }
+}
+void registerFlow(ATM &atm){
+    char driveLetter;
+    Account acc;
+    string line;
+    string pin;
+
+    cout << "\n--- Register New Account ---\n";
+
+    if (!atm.detectFlashDrive(driveLetter)){
+        cout << "No USB flash drive detected. Please insert your flash drive and try again.\n";
+        return;
+    }
+
+    while (true){
+        cout << "Enter full name: ";
+        getline(cin, acc.accountName);
+        if (atm.validateAccountName(acc.accountName)) break;
+        cout << "Invalid name. Names cannot be empty or contain a comma.\n";
+    }
+
+    while (true){
+        cout << "Enter birthday (MM/DD/YYYY): ";
+        getline(cin, acc.birthday);
+        if (atm.validateBirthday(acc.birthday)) break;
+        cout << "Invalid birthday. Use MM/DD/YYYY and a real calendar date\n";
+    }
+
+    while (true){
+        cout << "Enter contact number (11 digits, starts with 09): ";
+        getline(cin, acc.contactNumber);
+        if (atm.validateContactNumber(acc.contactNumber)) break;
+        cout << "Invalid contact number. It must be 11 digits and start with 09.\n";
+    }
+
+    while (true){
+        cout << "Enter initial deposit (minimum PHP 5000): ";
+        getline(cin, line);
+
+        if (!isValidDecimalNumber(line)){
+            cout << "Please enter a valid number.\n";
+            continue;
+        }
+
+        acc.balance = stod(line);
+
+        if (atm.validateDeposit(acc.balance)) break;
+        cout << "Initial deposit must be at least PHP 5000.\n";
+    }
+
+    while (true){
+        cout << "Create your PIN (4 to 6 digits): ";
+        pin = atm.getMaskedPinInput();
+        if (atm.validatePin(pin)) break;
+        cout << "Invalid PIN. It must be 4 to 6 digits, numbers only.\n";
+    }
+
+    acc.encryptedPin = pin;
+
+    if (atm.registerNewAccount(acc, driveLetter)) cout << "\nAccount registered successfully!\n";
+    else cout << "\nRegistration failed. Please check your flash drive and try again.\n";
+}
+void loginFlow(ATM &atm){
+    char driveLetter;
+
+    cout << "\n--- Login ---\n";
+
+    if (!atm.detectFlashDrive(driveLetter)){
+        cout << "No USB flash drive detected. Please insert your flash drive and try again.\n";
+        return;
+    }
+
+    cout << "Enter PIN: ";
+    string pin = atm.getMaskedPinInput();
+    int accNum;
+
+    if (!atm.authenticate(driveLetter, accNum, pin)){
+        cout << "Login failed. Wrong PIN or unrecognized card.\n";
+        return;
+    }
+
+    cout << "\nLogin successful. Welcome!\n";
+    transactionMenu(atm, accNum, driveLetter);
+}
+int main(){
+    srand(static_cast<unsigned int>(time(0)));
+    ATM atm;
+    atm.retrieveFromFile();
+    bool running = true;
+
+    while (running){
+        cout << "\n===== Welcome to the ATM =====\n";
+        cout << "1. Register New Account\n";
+        cout << "2. Login\n";
+        cout << "3. Exit\n";
+        cout << "Choice: ";
+
+        string choiceStr;
+        getline(cin, choiceStr);
+
+        if (!isValidWholeNumber(choiceStr)){
+            cout << "Invalid choice.\n";
+            continue;
+        }
+
+        int choice = stoi(choiceStr);
+
+        switch (choice){
+        case 1: registerFlow(atm); break;
+        case 2: loginFlow(atm); break;
+        case 3:
+            cout << "Thank you for using the ATM. Goodbye!\n";
+            running = false;
+            break;
+        default:
+            cout << "Invalid choice.\n";
+            break;
+        }
+    }
+
     return 0;
 }
 
 // ----- Operations -----
-bool ATM::insertAccount(const Account &acc) // O(1) insertion
-{
+bool ATM::insertAccount(const Account &acc){ // O(1) insertion
     Node *newNode = new Node(acc);
     newNode->next = head;
     head = newNode;
 
     return true;
 }
-
-Node *ATM::searchByAccountNumber(int accNum)
-{
+Node *ATM::searchByAccountNumber(int accNum){
     Node *current = head;
 
-    while (current)
-    {
-        if (current->data.accountNumber == accNum)
-        {
-            return current;
-        }
-
+    while (current){
+        if (current->data.accountNumber == accNum) return current;
         current = current->next;
     }
 
     return NULL;
 }
-
-void ATM::displayAll()
-{ // for testing
-    if (!head)
-    {
+void ATM::displayAll(){ // for testing
+    if (!head){
         cout << "No accounts found." << endl;
         return;
     }
 
     Node *current = head;
-    while (current)
-    {
+
+    while (current){
         cout << "Account Number: " << current->data.accountNumber << endl;
         cout << "Name: " << current->data.accountName << endl;
         cout << "Birthday: " << current->data.birthday << endl;
@@ -143,70 +371,40 @@ void ATM::displayAll()
         current = current->next;
     }
 }
-
-int ATM::generateNextAccountNumber()
-{
-    if (!head)
-    {
-        return 10001;
-    }
+int ATM::generateNextAccountNumber(){
+    if (!head) return 10001;
 
     int maxNum = 10001;
     Node *current = head;
 
-    while (current)
-    {
-        if (current->data.accountNumber > maxNum)
-        {
-            maxNum = current->data.accountNumber;
-        }
-
+    while (current){
+        if (current->data.accountNumber > maxNum) maxNum = current->data.accountNumber;
         current = current->next;
     }
 
     return maxNum + 1;
 }
-
-bool ATM::registerNewAccount(const Account &acc, char driveLetter) // generateAccNumber, generateRandomShiftKey, encryption, insert sa list, tas write to card
-{
+bool ATM::registerNewAccount(const Account &acc, char driveLetter){ // generateAccNumber, generateRandomShiftKey, encryption, insert sa list, tas write to card
     string rawPin = acc.encryptedPin;
-
-    if (!validatePin(rawPin))
-    {
-        return false;
-    }
-
-    if (!validateAccountName(acc.accountName))
-    {
-        return false;
-    }
-
     Account newAcc = acc; // copy so we can fill in the generated fields
+
+    if (!validatePin(rawPin)) return false;
+    if (!validateAccountName(acc.accountName)) return false;
 
     newAcc.accountNumber = generateNextAccountNumber();
     newAcc.pinShiftKey = generateRandomShiftKey();
     newAcc.encryptedPin = encryptPin(rawPin, newAcc.pinShiftKey);
 
-    if (!writeToCard(driveLetter, newAcc.accountNumber, newAcc.encryptedPin, newAcc.pinShiftKey))
-    {
-        return false;
-    }
-
-    if (!insertAccount(newAcc))
-    {
-        return false;
-    }
+    if (!writeToCard(driveLetter, newAcc.accountNumber, newAcc.encryptedPin, newAcc.pinShiftKey)) return false;
+    if (!insertAccount(newAcc)) return false;
 
     saveToFile();
     return true;
 }
-
-void ATM::clearList()
-{
+void ATM::clearList(){
     Node *ptr;
 
-    while (head)
-    {
+    while (head){
         ptr = head;
         head = head->next;
         delete (ptr);
@@ -214,151 +412,66 @@ void ATM::clearList()
 }
 
 // ----- Validations -----
-bool ATM::validateDeposit(double amount)
-{
-    return amount >= 5000;
-}
+bool ATM::validateDeposit(double amount){ return amount >= 5000; }
+bool ATM::validateAccountName(const string &name){
+    if (name.empty()) return false;
 
-bool ATM::validateAccountName(const string &name)
-{
-    if (name.empty())
-    {
-        return false;
-    }
-
-    for (char c : name)
-    {
-        if (c == ',')
-        {
-            return false;
-        }
-    }
+    for (char c : name) if (c == ',') return false;
 
     return true;
 }
+bool ATM::validateContactNumber(const string &num){
+    if (num.length() != 11) return false;
+    if (num[0] != '0' || num[1] != '9') return false;
 
-bool ATM::validateContactNumber(const string &num)
-{
-    if (num.length() != 11)
-    {
-        return false;
-    }
-
-    if (num[0] != '0' || num[1] != '9')
-    {
-        return false;
-    }
-
-    for (char c : num)
-    {
-        if (!isdigit(c))
-        {
-            return false;
-        }
-    }
+    for (char c : num) if (!isdigit(c)) return false;
 
     return true;
 }
-
-bool ATM::validateBirthday(const string &bday)
-{
-    int month, day, year;
-
-    if (bday.length() != 10)
-    {
-        return false;
-    }
-
-    if (bday[2] != '/' || bday[5] != '/')
-    {
-        return false;
-    }
-
-    for (int i = 0; i < 10; i++)
-    {
-        if (i == 2 || i == 5) // skip slashes
-        {
-            continue;
-        }
-
-        if (!isdigit(bday[i]))
-        {
-            return false;
-        }
-    }
-
-    month = stoi(bday.substr(0, 2));
-    day = stoi(bday.substr(3, 2));
-    year = stoi(bday.substr(6, 4));
-
-    if (month < 1 || month > 12)
-    {
-        return false;
-    }
-
+bool ATM::validateBirthday(const string &bday){
+    int month = stoi(bday.substr(0, 2));
+    int day = stoi(bday.substr(3, 2));
+    int year = stoi(bday.substr(6, 4));
+    int daysInMonth[] = {31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31};
+    int maxDay = daysInMonth[month - 1];
+    bool isLeapYear = (year % 4 == 0 && year % 100 != 0) || (year % 400 == 0);
     time_t t = time(0);
     tm *now = localtime(&t);
     int currentYear = now->tm_year + 1900; // updated current year
 
-    if (year < 1900 || year > currentYear)
-    {
-        return false;
+    if (bday.length() != 10) return false;
+    if (bday[2] != '/' || bday[5] != '/') return false;
+
+    for (int i = 0; i < 10; i++){
+        if (i == 2 || i == 5) continue; // skip slashes
+        if (!isdigit(bday[i])) return false;
     }
 
-    int daysInMonth[] = {31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31};
-    bool isLeapYear = (year % 4 == 0 && year % 100 != 0) || (year % 400 == 0);
-    int maxDay = daysInMonth[month - 1];
-
-    if (month == 2 && isLeapYear)
-    {
-        maxDay = 29;
-    }
-
-    if (day < 1 || day > maxDay)
-    {
-        return false;
-    }
+    if (month < 1 || month > 12) return false;
+    if (year < 1900 || year > currentYear) return false;
+    if (month == 2 && isLeapYear) maxDay = 29;
+    if (day < 1 || day > maxDay) return false;
 
     return true;
 }
-
-bool ATM::validateAmount(double amount, double currentBalance)
-{
-    return amount > 0 && amount <= currentBalance;
-}
-
+bool ATM::validateAmount(double amount, double currentBalance){ return amount > 0 && amount <= currentBalance; }
 bool ATM::validatePin(const string &pin)
 { // max 6 digits, Enter if only 4
-    if (pin.length() < 4 || pin.length() > 6)
-    {
-        return false;
-    }
+    if (pin.length() < 4 || pin.length() > 6) return false;
 
-    for (char c : pin)
-    {
-        if (!isdigit(c))
-        {
-            return false;
-        }
-    }
+    for (char c : pin) if (!isdigit(c)) return false;
 
     return true;
 }
 
 // ----- File Handling -----
-bool ATM::saveToFile()
-{
+bool ATM::saveToFile(){
     ofstream outputFile(DATABASE);
-
-    if (!outputFile.is_open())
-    {
-        return false;
-    }
-
     Node *current = head;
 
-    while (current)
-    {
+    if (!outputFile.is_open()) return false;    
+
+    while (current){
         outputFile << current->data.accountNumber << ","
                    << current->data.accountName << ","
                    << current->data.birthday << ","
@@ -372,24 +485,16 @@ bool ATM::saveToFile()
     outputFile.close();
     return true;
 }
-
-bool ATM::retrieveFromFile()
-{
+bool ATM::retrieveFromFile(){
     ifstream inputFile(DATABASE);
+    string line;
 
-    if (!inputFile.is_open())
-    {
-        return false;
-    }
+    if (!inputFile.is_open()) return false;
 
     clearList();
 
-    string line;
-
-    while (getline(inputFile, line))
-    {
-        if (line.empty())
-            continue;
+    while (getline(inputFile, line)){
+        if (line.empty()) continue;
 
         stringstream ss(line);
         string data;
@@ -414,55 +519,41 @@ bool ATM::retrieveFromFile()
 }
 
 // ----- PIN encryption -----
-string ATM::encryptPin(const string &rawPin, int shiftKey)
-{
+string ATM::encryptPin(const string &rawPin, int shiftKey){
     string result = rawPin;
 
-    for (char &c : result)
-    {
+    for (char &c : result){
         int digit = (c - '0' + shiftKey) % 10;
         c = '0' + digit;
     }
 
     return result;
 }
-
-string ATM::decryptPin(const string &encryptedPin, int shiftKey)
-{
+string ATM::decryptPin(const string &encryptedPin, int shiftKey){
     string result = encryptedPin;
 
-    for (char &c : result)
-    {
+    for (char &c : result){
         int digit = (c - '0' - shiftKey % 10 + 10) % 10;
         c = '0' + digit;
     }
 
     return result;
 }
-
-int ATM::generateRandomShiftKey()
-{ // called once at registration
-    return rand() % 9 + 1;
-}
+int ATM::generateRandomShiftKey(){ return rand() % 9 + 1; } // called once at registration
 
 // ----- Flash Drive -----
-bool ATM::detectFlashDrive(char &driveLetter)
-{
+bool ATM::detectFlashDrive(char &driveLetter){
     DWORD drives = GetLogicalDrives();
 
-    for (int i = 0; i < 26; i++)
-    {
+    for (int i = 0; i < 26; i++){
         // check kung nakita yung drive
-        if (drives & (1 << i))
-        {
+        if (drives & (1 << i)){
             char letter = 'A' + i;
             string path = string(1, letter) + ":\\";
-
             UINT type = GetDriveTypeA(path.c_str());
 
             // check kung usb yung drive na nakita
-            if (type == DRIVE_REMOVABLE)
-            {
+            if (type == DRIVE_REMOVABLE){
                 driveLetter = letter;
                 return true;
             }
@@ -471,9 +562,7 @@ bool ATM::detectFlashDrive(char &driveLetter)
 
     return false; // di nakasaksak usb
 }
-
-string ATM::getMaskedPinInput()
-{
+string ATM::getMaskedPinInput(){
     string pin = "";
     char ch;
 
@@ -481,20 +570,13 @@ string ATM::getMaskedPinInput()
     {
         ch = _getch();
 
-        if (ch == '\r' || ch == '\n') // Pinindot enter
-        {
-            break;
-        }
-        else if (ch == '\b') // Pinindot backspace
-        {
-            if (!pin.empty())
-            {
+        if (ch == '\r' || ch == '\n') break; // Pinindot enter
+        else if (ch == '\b'){// Pinindot backspace
+            if (!pin.empty()){
                 pin.pop_back();
                 cout << "\b \b";
             }
-        }
-        else
-        {
+        }else{
             pin += ch;
             cout << '*';
         }
@@ -503,32 +585,22 @@ string ATM::getMaskedPinInput()
     cout << endl;
     return pin;
 }
-
-bool ATM::writeToCard(char driveLetter, int accNum, const string &encryptedPin, int shiftKey)
-{
+bool ATM::writeToCard(char driveLetter, int accNum, const string &encryptedPin, int shiftKey){
     string path = string(1, driveLetter) + ":\\pin.code";
 
     ofstream file(path);
-    if (!file.is_open())
-    {
-        return false;
-    }
+    if (!file.is_open()) return false;
 
     file << accNum << "," << encryptedPin << "," << shiftKey;
 
     file.close();
     return true;
 }
-
-bool ATM::readFromCard(char driveLetter, int &accNum, string &encryptedPin, int &shiftKey)
-{
+bool ATM::readFromCard(char driveLetter, int &accNum, string &encryptedPin, int &shiftKey){
     string path = string(1, driveLetter) + ":\\pin.code";
 
     ifstream file(path);
-    if (!file.is_open())
-    {
-        return false;
-    }
+    if (!file.is_open()) return false;
 
     string line;
     getline(file, line);
@@ -537,49 +609,29 @@ bool ATM::readFromCard(char driveLetter, int &accNum, string &encryptedPin, int 
     stringstream ss(line);
     string data;
 
-    if (!getline(ss, data, ','))
-    {
-        return false;
-    }
+    if (!getline(ss, data, ',')) return false;
+    if (!getline(ss, data, ',')) return false;
+    if (!getline(ss, data, ',')) return false;
+
     accNum = stoi(data);
-
-    if (!getline(ss, data, ','))
-    {
-        return false;
-    }
     encryptedPin = data;
-
-    if (!getline(ss, data, ','))
-    {
-        return false;
-    }
     shiftKey = stoi(data);
 
     return true;
 }
-
-bool ATM::authenticate(char driveLetter, int &accNum, const string &enteredPin)
-{
+bool ATM::authenticate(char driveLetter, int &accNum, const string &enteredPin){
     string storedEncryptedPin;
     int storedShiftKey;
 
-    if (!readFromCard(driveLetter, accNum, storedEncryptedPin, storedShiftKey))
-    {
-        return false; // no card
-    }
-
-    if (!searchByAccountNumber(accNum))
-    {
-        return false; // unrecognized card, no matching account sa database
-    }
+    if (!readFromCard(driveLetter, accNum, storedEncryptedPin, storedShiftKey)) return false; // no card
+    if (!searchByAccountNumber(accNum)) return false; // unrecognized card, no matching account sa database
 
     string decrypted = decryptPin(storedEncryptedPin, storedShiftKey);
     return decrypted == enteredPin;
 }
 
 // ----- For Users -----
-void ATM::checkBalance(int accNum)
-{
+void ATM::checkBalance(int accNum){
     Node *accountNode = searchByAccountNumber(accNum);
 
     if (!accountNode)
@@ -590,64 +642,33 @@ void ATM::checkBalance(int accNum)
 
     cout << "Current Balance: " << accountNode->data.balance << endl;
 }
-
-bool ATM::withdraw(int accNum, double amount)
-{
+bool ATM::withdraw(int accNum, double amount){
     Node *accountNode = searchByAccountNumber(accNum);
 
-    if (!accountNode)
-    {
-        return false;
-    }
-
-    if (!validateAmount(amount, accountNode->data.balance))
-    {
-        return false;
-    }
+    if (!accountNode) return false;
+    if (!validateAmount(amount, accountNode->data.balance)) return false;
 
     accountNode->data.balance -= amount;
     saveToFile();
     return true;
 }
-
-bool ATM::deposit(int accNum, double amount)
-{
-    if (amount <= 0)
-    {
-        return false;
-    }
-
+bool ATM::deposit(int accNum, double amount){
     Node *accountNode = searchByAccountNumber(accNum);
 
-    if (!accountNode)
-    {
-        return false;
-    }
+    if (amount <= 0) return false;
+    if (!accountNode) return false;
 
     accountNode->data.balance += amount;
     saveToFile();
     return true;
 }
-
-bool ATM::fundTransfer(int fromAccNum, int toAccNum, double amount)
-{
+bool ATM::fundTransfer(int fromAccNum, int toAccNum, double amount){
     Node *fromNode = searchByAccountNumber(fromAccNum);
     Node *toNode = searchByAccountNumber(toAccNum);
 
-    if (!fromNode || !toNode)
-    {
-        return false;
-    }
-
-    if (fromAccNum == toAccNum)
-    {
-        return false; // bawal transfer sa sarili
-    }
-
-    if (!validateAmount(amount, fromNode->data.balance))
-    {
-        return false;
-    }
+    if (!fromNode || !toNode) return false;
+    if (fromAccNum == toAccNum) return false; // bawal transfer sa sarili
+    if (!validateAmount(amount, fromNode->data.balance)) return false;
 
     fromNode->data.balance -= amount;
     toNode->data.balance += amount;
@@ -655,34 +676,19 @@ bool ATM::fundTransfer(int fromAccNum, int toAccNum, double amount)
     saveToFile();
     return true;
 }
-
-bool ATM::changePin(int accNum, const string &oldPin, const string &newPin, char driveLetter)
-{
+bool ATM::changePin(int accNum, const string &oldPin, const string &newPin, char driveLetter){
     Node *accountNode = searchByAccountNumber(accNum);
 
-    if (!accountNode)
-    {
-        return false;
-    }
+    if (!accountNode) return false;
 
     string decryptedOld = decryptPin(accountNode->data.encryptedPin, accountNode->data.pinShiftKey);
 
-    if (decryptedOld != oldPin)
-    {
-        return false; // wrong old PIN
-    }
-
-    if (!validatePin(newPin))
-    {
-        return false;
-    }
+    if (decryptedOld != oldPin) return false; // wrong old PIN
+    if (!validatePin(newPin)) return false;
 
     string newEncrypted = encryptPin(newPin, accountNode->data.pinShiftKey);
 
-    if (!writeToCard(driveLetter, accNum, newEncrypted, accountNode->data.pinShiftKey))
-    {
-        return false; // card write failed, don't update the database
-    }
+    if (!writeToCard(driveLetter, accNum, newEncrypted, accountNode->data.pinShiftKey)) return false; // card write failed, don't update the database
 
     accountNode->data.encryptedPin = newEncrypted;
 
