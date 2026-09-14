@@ -134,6 +134,8 @@ void transactionMenu(ATM &atm, int accNum, char driveLetter){
         switch (choice){
         case 1:
             atm.checkBalance(accNum);
+            system("pause");
+            system("cls");
             break;
         case 2:
             cout << "Enter deposit amount: ";
@@ -148,6 +150,8 @@ void transactionMenu(ATM &atm, int accNum, char driveLetter){
 
             if (atm.deposit(accNum, amount)) cout << "Deposit successful.\n";
             else cout << "Deposit failed. Amount must be greater than 0.\n";
+            system("pause");
+            system("cls");
             break;
         case 3:
             cout << "Enter withdrawal amount: ";
@@ -162,6 +166,8 @@ void transactionMenu(ATM &atm, int accNum, char driveLetter){
 
             if (atm.withdraw(accNum, amount)) cout << "Withdrawal successful.\n";
             else cout << "Withdrawal failed. Check your amount and balance.\n";
+            system("pause");
+            system("cls");
             break;
         case 4:{
             cout << "Enter recipient account number: ";
@@ -187,6 +193,8 @@ void transactionMenu(ATM &atm, int accNum, char driveLetter){
 
             if (atm.fundTransfer(accNum, toAccNum, amount)) cout << "Transfer successful.\n";
             else cout << "Transfer failed. Check the recipient account and amount.\n";
+            system("pause");
+            system("cls");
             break;
         }
         case 5:{
@@ -198,6 +206,8 @@ void transactionMenu(ATM &atm, int accNum, char driveLetter){
 
             if (atm.changePin(accNum, oldPin, newPin, driveLetter)) cout << "PIN changed successfully.\n";
             else cout << "PIN change failed. Check your current PIN and the new PIN format.\n";
+            system("pause");
+            system("cls");
             break;
         }
         case 6:
