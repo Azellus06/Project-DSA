@@ -610,11 +610,10 @@ bool ATM::readFromCard(char driveLetter, int &accNum, string &encryptedPin, int 
     string data;
 
     if (!getline(ss, data, ',')) return false;
-    if (!getline(ss, data, ',')) return false;
-    if (!getline(ss, data, ',')) return false;
-
     accNum = stoi(data);
+    if (!getline(ss, data, ',')) return false;
     encryptedPin = data;
+    if (!getline(ss, data, ',')) return false;
     shiftKey = stoi(data);
 
     return true;
