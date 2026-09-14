@@ -555,8 +555,12 @@ bool ATM::authenticate(char driveLetter, int &accNum, const string &enteredPin)
         return false; // no card
     }
 
-    string decrypted = decryptPin(storedEncryptedPin, storedShiftKey);
+    if (!searchByAccountNumber(accNum))
+    {
+        return false; // unrecognized card, no matching account sa database
+    }
 
+    string decrypted = decryptPin(storedEncryptedPin, storedShiftKey);
     return decrypted == enteredPin;
 }
 
