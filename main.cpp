@@ -233,6 +233,15 @@ void registerFlow(ATM &atm){
         return;
     }
 
+    // check if card is already used
+    string path = string(1, driveLetter) + ":\\pin.code";
+    ifstream checkFile(path);
+    if (checkFile.is_open()) {
+        cout << "Error: This USB drive is already registered to an account.\n";
+        checkFile.close();
+        return;
+    }
+
     while (true){
         cout << "Enter full name: ";
         getline(cin, acc.accountName);
