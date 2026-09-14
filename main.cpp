@@ -296,12 +296,25 @@ bool ATM::validateBirthday(const string &bday)
         return false;
     }
 
-    if (day < 1 || day > 31)
+    time_t t = time(0);
+    tm *now = localtime(&t);
+    int currentYear = now->tm_year + 1900; // updated current year
+
+    if (year < 1900 || year > currentYear)
     {
         return false;
     }
 
-    if (year < 1900 || year > 2026)
+    int daysInMonth[] = {31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31};
+    bool isLeapYear = (year % 4 == 0 && year % 100 != 0) || (year % 400 == 0);
+    int maxDay = daysInMonth[month - 1];
+
+    if (month == 2 && isLeapYear)
+    {
+        maxDay = 29;
+    }
+
+    if (day < 1 || day > maxDay)
     {
         return false;
     }
