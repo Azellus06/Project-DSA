@@ -58,6 +58,7 @@ public:
 
     // ----- Validations -----
     bool validateDeposit(double amount); // >= 5000
+    bool validateAccountName(const string &name); // bawal empty, no commas
     bool validateContactNumber(const string &num);
     bool validateBirthday(const string &bday);                 // format check
     bool validateAmount(double amount, double currentBalance); // pang withdraw, bawal 0 at overdraw
@@ -206,6 +207,24 @@ void ATM::clearList()
 bool ATM::validateDeposit(double amount)
 {
     return amount >= 5000;
+}
+
+bool ATM::validateAccountName(const string &name)
+{
+    if (name.empty())
+    {
+        return false;
+    }
+
+    for (char c : name)
+    {
+        if (c == ',')
+        {
+            return false;
+        }
+    }
+
+    return true;
 }
 
 bool ATM::validateContactNumber(const string &num)
