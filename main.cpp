@@ -57,7 +57,7 @@ public:
     void clearList();
 
     // ----- Validations -----
-    bool validateDeposit(double amount); // >= 5000
+    bool validateDeposit(double amount);          // >= 5000
     bool validateAccountName(const string &name); // bawal empty, no commas
     bool validateContactNumber(const string &num);
     bool validateBirthday(const string &bday);                 // format check
@@ -167,14 +167,24 @@ int ATM::generateNextAccountNumber()
     return maxNum + 1;
 }
 
-bool ATM::registerNewAccount(const Account &acc, char driveLetter)
-{                         // generateAccNumber, generateRandomShiftKey, encryption, insert sa list, tas write to card
+bool ATM::registerNewAccount(const Account &acc, char driveLetter) // generateAccNumber, generateRandomShiftKey, encryption, insert sa list, tas write to card
+{
+    string rawPin = acc.encryptedPin;
+
+    if (!validatePin(rawPin))
+    {
+        return false;
+    }
+
+    if (!validateAccountName(acc.accountName))
+    {
+        return false;
+    }
+
     Account newAcc = acc; // copy so we can fill in the generated fields
 
     newAcc.accountNumber = generateNextAccountNumber();
     newAcc.pinShiftKey = generateRandomShiftKey();
-
-    string rawPin = acc.encryptedPin;
     newAcc.encryptedPin = encryptPin(rawPin, newAcc.pinShiftKey);
 
     if (!writeToCard(driveLetter, newAcc.accountNumber, newAcc.encryptedPin, newAcc.pinShiftKey))
