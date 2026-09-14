@@ -11,9 +11,6 @@
 using namespace std;
 const string DATABASE = "database.csv";
 
-// fix file handling issue
-// NOTE: assumes acc.encryptedPin currently holds the RAW pin typed by the user which gets encrypted here before storing/inserting
-
 struct Account
 {
     int accountNumber; // 5-digit, auto-generated, start at 10001
@@ -87,8 +84,13 @@ public:
     bool withdraw(int accNum, double amount);
     bool deposit(int accNum, double amount);
     bool fundTransfer(int fromAccNum, int toAccNum, double amount);
-    bool changePin(int accNum, const string &oldPin, const string &newPin);
+    bool changePin(int accNum, const string &oldPin, const string &newPin, char driveLetter);
 };
+
+int main()
+{
+    return 0;
+}
 
 // ----- Operations -----
 bool ATM::insertAccount(const Account &acc) // O(1) insertion
@@ -174,12 +176,12 @@ bool ATM::registerNewAccount(const Account &acc, char driveLetter)
     string rawPin = acc.encryptedPin;
     newAcc.encryptedPin = encryptPin(rawPin, newAcc.pinShiftKey);
 
-    if (!insertAccount(newAcc))
+    if (!writeToCard(driveLetter, newAcc.accountNumber, newAcc.encryptedPin, newAcc.pinShiftKey))
     {
         return false;
     }
 
-    if (!writeToCard(driveLetter, newAcc.accountNumber, newAcc.encryptedPin, newAcc.pinShiftKey))
+    if (!insertAccount(newAcc))
     {
         return false;
     }
@@ -270,7 +272,7 @@ bool ATM::validateBirthday(const string &bday)
         return false;
     }
 
-    if (year < 1900 || year > 2025)
+    if (year < 1900 || year > 2026)
     {
         return false;
     }
@@ -608,7 +610,7 @@ bool ATM::fundTransfer(int fromAccNum, int toAccNum, double amount)
     return true;
 }
 
-bool ATM::changePin(int accNum, const string &oldPin, const string &newPin)
+bool ATM::changePin(int accNum, const string &oldPin, const string &newPin, char driveLetter)
 {
     Node *accountNode = searchByAccountNumber(accNum);
 
@@ -630,6 +632,12 @@ bool ATM::changePin(int accNum, const string &oldPin, const string &newPin)
     }
 
     string newEncrypted = encryptPin(newPin, accountNode->data.pinShiftKey);
+
+    if (!writeToCard(driveLetter, accNum, newEncrypted, accountNode->data.pinShiftKey))
+    {
+        return false; // card write failed, don't update the database
+    }
+
     accountNode->data.encryptedPin = newEncrypted;
 
     saveToFile();
